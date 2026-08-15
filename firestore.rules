@@ -1,0 +1,25 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    match /rooms/{roomId} {
+      allow read, create: if signedIn();
+      allow update: if signedIn();
+      allow delete: if signedIn() && resource.data.hostId == request.auth.uid;
+
+      match /participants/{participantId} {
+        allow read: if signedIn();
+        allow create, update, delete: if signedIn() && participantId == request.auth.uid;
+      }
+
+      match /votes/{movieId} {
+        allow read, create, update: if signedIn();
+        allow delete: if false;
+      }
+    }
+  }
+}
